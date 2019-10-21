@@ -8,12 +8,12 @@ log = (arg) ->
 ##initialization function  -> is automatically being called!  ONLY RELY ON DOM AND VARIABLES!! NO PLUGINS NO OHTER INITIALIZATIONS!!
 serverstatemodule.initialize = () ->
     log "serverstatemodule.initialize"
+    return
 
 #region the configuration Object
 serverstatemodule.activeToken = ""
 serverstatemodule.app = null
 serverstatemodule.programs = null
-serverstatemodule.langStrings = null
 #endregion
 
 export default serverstatemodule

@@ -8,8 +8,6 @@ log = (arg) ->
 
 #region internal variables
 sci = null
-git = null
-img = null
 pdh = null
 #endregion
 
@@ -17,16 +15,13 @@ pdh = null
 startupmodule.initialize = () ->
     log "startupmodule.initialize"
     sci = allModules.scimodule
-    git = allModules.githandlermodule
-    img = allModules.imagehandlermodule
     pdh = allModules.programdatahandlermodule
+    return
 
 #region exposed functions
 startupmodule.serviceStartup = ->
     log "startupmodule.serviceStartup"
     try
-        await git.startupCheck()
-        await img.prepareImages()
         await pdh.prepareProgramData()
         await sci.prepareAndExpose()
     catch err then log err

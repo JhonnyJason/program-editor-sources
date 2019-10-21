@@ -18,6 +18,7 @@ authenticationhandlermodule.initialize = () ->
     state = allModules.authenticationhandlermodule
     cfg = allModules.configmodule
     state.activeToken = getRandomChars(40)
+    return
 
 getRandomChars = (length) ->
     result = ''

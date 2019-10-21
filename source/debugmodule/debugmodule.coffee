@@ -7,14 +7,17 @@ debugmodule.initialize = () ->
 
 debugmodule.modulesToDebug = 
     unbreaker: true
-    authenticationhandlermodule: true
+    # authenticationhandlermodule: true
     configmodule: true
-    githandlermodule: true
-    imagehandlermodule: true
+    databasehandlermodule: true
     programdatahandlermodule: true
-    scimodule: true
-    serverstatemodule: true
-    # startupmodule: true
+    # rundatahandlermoule: true
+    # scimodule: true
+    # serverstatemodule: true
+    startupmodule: true
+    # utilmodule: true
+    # websocketmodule: true
+
 #region exposed variables
 
 export default debugmodule

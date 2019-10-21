@@ -9,23 +9,23 @@ log = (arg) ->
 ##initialization function  -> is automatically being called!  ONLY RELY ON DOM AND VARIABLES!! NO PLUGINS NO OHTER INITIALIZATIONS!!
 configmodule.initialize = () ->
     log "configmodule.initialize"
+    return
 
 #region the configuration Object
 configmodule.defaultPort = 3333
 configmodule.secret = "asdf" 
 
-## path definitions
-configmodule.imageServingPath = "program-images/"
-configmodule.imageUpstreamPath = "../aurox-program-manager-upstream/svg" 
-configmodule.upstreamRepoPath = "../aurox-program-manager-upstream" 
-configmodule.gitRootPath = "../" 
-configmodule.programsPath = "../aurox-program-manager-upstream/programs.coffee"
-configmodule.langfilePath = "../aurox-program-manager-upstream/programsLangfile.coffee"
-## github access
-configmodule.user = "JhonnyJason"
-configmodule.pass = "gz7vi9njt6cfhu8bu8bhbhu8"
-configmodule.repo = "github.com/JhonnyJason/aurox-program-manager-upstream.git"
-
+# database config
+# configmodule.dbHost = "178.162.221.176"
+configmodule.dbHost = "ulea"
+configmodule.dbName = "programs_test_history"
+configmodule.dbUser = "aurox"
+configmodule.dbPassword = "dzy3TqBENvFMC85"
+# configmodule.dbUser = "lenny"
+# configmodule.dbPassword = "4564564rfvujm4564564rfvujm"
+configmodule.dbCaFilePath = 'ssl/server-ca.pem'
+configmodule.dbKeyFilePath = 'ssl/client-key.pem'
+configmodule.dbCertFilePath = 'ssl/client-cert.pem'
 
 #endregion
 

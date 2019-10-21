@@ -5,7 +5,7 @@ scimodule = {name: "scimodule"}
 require('systemd')
 express = require('express')
 bodyParser = require('body-parser')
-fileUploadMiddleware = require("express-fileupload")
+expressWs = require("express-ws")
 cors = require("cors")
 #endregion
 
@@ -16,11 +16,9 @@ log = (arg) ->
 
 #region internal variables
 cfg = null
-imageHandler = null
 authenticationHandler = null
-state = null
 programDataHandler = null
-gitHandler = null
+state = null
 
 app = null
 #endregion
@@ -29,17 +27,16 @@ app = null
 scimodule.initialize = () ->
     log "scimodule.initialize"
     cfg = allModules.configmodule
-    imageHandler = allModules.imagehandlermodule
     authenticationHandler = allModules.authenticationhandlermodule
-    state = allModules.serverstatemodule
     programDataHandler = allModules.programdatahandlermodule
-    gitHandler = allModules.githandlermodule
-    
+    state = allModules.serverstatemodule
+
     app = express()
+    wsHandle = expressWs(app);
     app.use cors()
     app.use bodyParser.urlencoded(extended: false)
     app.use bodyParser.json()
-    app.use fileUploadMiddleware()
+    return
 
 #region internal functions
 ################################################################################
@@ -84,24 +81,6 @@ deleteProgram = (req, res) ->
     result = getDeleteProgramResult(data)
     res.end JSON.stringify(result)
     return
-
-fileUpload = (req, res) ->
-    keys = Object.keys(req.files)
-    console.log(keys)
-    if (keys.length != 1)
-        return res.status(400).send('Unexpected Number of files ' + keys.length)
-    
-    filename = keys[0]
-    file = req.files[filename]
-    imageHandler.store(file, filename)
-    res.send(filename + " uploaded!")
-
-discardUploads = (req, res) ->
-    console.log("discardUploads")
-    result = {}
-    imageHandler.initialize()
-    result.result = "ok"
-    return res.end(JSON.stringify(result))
 
 ################################################################################
 # Layer 1 request Input handler
@@ -161,10 +140,8 @@ attachSCIFunctions = ->
     app.post '/login', checkLogin
     app.post '/loadProgramData', loadProgramData
     app.post '/saveProgramData', saveProgramData
-    app.post '/discardUploads', discardUploads
     app.post '/createProgram', createProgram
     app.post '/deleteProgram', deleteProgram
-    app.post '/upload', fileUpload
 
 listenForRequests = ->
     log "listenForRequests"
@@ -181,7 +158,6 @@ listenForRequests = ->
 #region exposed functions
 scimodule.prepareAndExpose = ->
     log "scimodule.prepareAndExpose"
-    app.use express.static(cfg.imageServingPath)
     attachSCIFunctions()
     listenForRequests()
     
