@@ -1,39 +1,40 @@
-
 scimodule = {name: "scimodule"}
+############################################################
+log = (arg) ->
+    if allModules.debugmodule.modulesToDebug["scimodule"]?  then console.log "[scimodule]: " + arg
+    return
 
+############################################################
 #region node_modules
 require('systemd')
 express = require('express')
 bodyParser = require('body-parser')
 expressWs = require("express-ws")
-cors = require("cors")
 #endregion
 
-#log Switch
-log = (arg) ->
-    if allModules.debugmodule.modulesToDebug["scimodule"]?  then console.log "[scimodule]: " + arg
-    return
-
-#region internal variables
+############################################################
+#region localModules
 cfg = null
 authenticationHandler = null
 programDataHandler = null
 state = null
-
-app = null
 #endregion
 
-##initialization function  -> is automatically being called!  ONLY RELY ON DOM AND VARIABLES!! NO PLUGINS NO OHTER INITIALIZATIONS!!
+############################################################
+app = null
+
+############################################################
 scimodule.initialize = () ->
     log "scimodule.initialize"
+    ############################################################
     cfg = allModules.configmodule
     authenticationHandler = allModules.authenticationhandlermodule
     programDataHandler = allModules.programdatahandlermodule
     state = allModules.serverstatemodule
 
+    ############################################################
     app = express()
     wsHandle = expressWs(app);
-    app.use cors()
     app.use bodyParser.urlencoded(extended: false)
     app.use bodyParser.json()
     return

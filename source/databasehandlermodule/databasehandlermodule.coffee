@@ -28,48 +28,47 @@ databasehandlermodule.initialize = () ->
     # log "keyPath: " + keyPath
     # log "certPath: " + certPath
     # return
-    # accessOptions = 
-    #     multipleStatements: true
-    #     host: c.dbHost
-    #     user: c.dbUser
-    #     password: c.dbPassword
-    #     database: c.dbName
-    #     ssl:
-    #         ca: fs.readFileSync(caPath)
-    #         key: fs.readFileSync(keyPath)
-    #         cert: fs.readFileSync(certPath)
-    #         # rejectUnauthorized: false
-
-    # dbConnectionMysql = mysql.createConnection(accessOptions)
-    # console.log(" ! ! ! ! !  surrviced connect call!")
-
-    # return
-    caFile = [fs.readFileSync(caPath, "utf8")]
-    keyFile = [fs.readFileSync(keyPath, "utf8")]
-    certFile = [fs.readFileSync(certPath, "utf8")]
-
     accessOptions = 
         multipleStatements: true
         host: c.dbHost
         user: c.dbUser
         password: c.dbPassword
         database: c.dbName
-        # timezone: "auto"
         ssl:
-            ca: caFile
-            key: keyFile
-            cert: certFile
+            ca: fs.readFileSync(caPath)
+            key: fs.readFileSync(keyPath)
+            cert: fs.readFileSync(certPath)
             rejectUnauthorized: false
 
-    dbConnectionMariadb = await mariadb.createConnection(accessOptions)
+    dbConnectionMysql = mysql.createConnection(accessOptions)
+    console.log("\n ! ! ! ! !  survived connect call!\n")
 
-    console.log(" ! ! ! ! !  surrviced connect call!")
     return
+    # caFile = [fs.readFileSync(caPath, "utf8")]
+    # keyFile = [fs.readFileSync(keyPath, "utf8")]
+    # certFile = [fs.readFileSync(certPath, "utf8")]
 
-#region internal function
-##############################################################################
-# Query Functions
-##############################################################################
+    # accessOptions = 
+    #     multipleStatements: true
+    #     host: c.dbHost
+    #     user: c.dbUser
+    #     password: c.dbPassword
+    #     database: c.dbName
+    #     # timezone: "auto"
+    #     ssl:
+    #         ca: caFile
+    #         key: keyFile
+    #         cert: certFile
+    #         rejectUnauthorized: false
+
+    # dbConnectionMariadb = await mariadb.createConnection(accessOptions)
+
+    # console.log(" ! ! ! ! !  surrviced connect call!")
+    # return
+
+#region internalFunction
+
+#region queryGetter
 getStaticProgramInformationQuery = ->
     return "SELECT * FROM programs_test_history.programs_static;"
     
@@ -115,9 +114,8 @@ getSaveNewProgramQuery = (inserts) ->
 getSaveNewRunQuery = (inserts) ->
     sql = "INSERT INTO `programs_test_history`.`programs_runs`(`programs_dynamic_id`,`timestamp`,`run_label`,`temp_ble_module`,`temp_battery_left`,`temp_pte1`,`temp_pte1_outside`,`temp_pte2`,`temp_pte2_outside`,`temp_pte3`,`temp_pte3_outside`,`temp_pte4`,`temp_pte4_outside`,`programs_progress`)\nVALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?);"
     return mysql.format(sql, inserts)
-################################################################################
-# Internal Functions
-################################################################################
+#endregion
+
 getProgramOverview = (resolve, reject) ->
     dbConnectionMysql.query(
         getProgramsOverviewQuery(), 

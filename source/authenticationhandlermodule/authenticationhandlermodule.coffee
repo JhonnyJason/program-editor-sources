@@ -15,7 +15,7 @@ cfg = null
 ##initialization function  -> is automatically being called!  ONLY RELY ON DOM AND VARIABLES!! NO PLUGINS NO OHTER INITIALIZATIONS!!
 authenticationhandlermodule.initialize = () ->
     log "authenticationhandlermodule.initialize"
-    state = allModules.authenticationhandlermodule
+    state = allModules.serverstatemodule
     cfg = allModules.configmodule
     state.activeToken = getRandomChars(40)
     return

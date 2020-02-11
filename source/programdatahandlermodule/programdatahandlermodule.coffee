@@ -138,6 +138,7 @@ digestStaticProgramInfo = (staticProgramInfo) ->
             iconfilename: info.iconfilename
             giffilename: info.giffilename
             descriptionkey: info.descriptionkey
+        log "\n" + JSON.stringify(result[info.programs_static_id], null, 4)
     return result
 
 retrieveStaticInfo = ->
