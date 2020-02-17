@@ -10,12 +10,15 @@ log = (arg) ->
     return
 
 #region internal variables
-io_socket = null
+
+socket = null
 
 auth = null
 state = null
 runDataHandler = null
 programDataHandler = null
+
+reflexes = {}
 #endregion
 
 ##initialization function  -> is automatically being called!  ONLY RELY ON DOM AND VARIABLES!! NO PLUGINS NO OHTER INITIALIZATIONS!!
@@ -25,46 +28,15 @@ websocketmodule.initialize = () ->
     state = allModules.serverstatemodule
     runDataHandler = allModules.rundatahandlermodule
     programDataHandler = allModules.programdatahandlermodule
-
-    # ## ToDo reimplement using express-ws in scimodule
-    # io_socket = null
-    # io.on("connection", handleConnection)
-    # io.on("error", (reason) -> log("Error!\n" + reason))
-    # io.on("disconnect", (reason) -> log("disconnected!\n" + reason))
     return
 
 
 #region internal functions
 ################################################################################
-attachEventsToSocket = (socket) ->
-    log "attachEventsToSocket"
-    # App communicates run stuff
-    socket.on("runStart", handleRunStart)
-    socket.on("runQuit", handleRunQuit)
-    socket.on("measurementData", handleMeasurementData)
-    # App requesting all current Program Data
-    socket.on("programDataPlease", handleProgramDataRequest)
-    # Webinterface asking for specific program data
-    socket.on("updateRunLabelPlease", handleRunLabelUpdateRequest)
-    socket.on("saveProgramPlease", handleSaveProgramRequest)
-    socket.on("cloneProgramPlease", handleCloneProgramRequest)
-    socket.on("setProgramActivePlease", handleSetProgramActiveRequest)
-    socket.on("programOverviewPlease", handleProgramOverviewRequest)
-    socket.on("runOverviewPlease", handleRunOverviewRequest)
-    socket.on("staticProgramDataPlease", handleStaticProgramDataRequest)
-    socket.on("programPlease", handleProgramRequest)
-    socket.on("runPlease", handleRunRequest)
-    # webinterface 
-    socket.on("loginAttempt", handleLoginAttempt)
 
 ################################################################################
 # io stuff
 ################################################################################
-handleConnection = (socket) ->
-    log "handleConnection"
-    attachEventsToSocket(socket)
-    return
-
 handleRunStart = ->
     log "handleRunStart"
     try runDataHandler.noteRunStart()
@@ -172,8 +144,31 @@ handleRunLabelUpdateRequest = (data) ->
 #endregion
 
 #region exposed functions
-websocketmodule.prepareWebsocket = (expressApp) ->
-    log "websocketmodule.prepareWebsocket"
+websocketmodule.attachReflexes = (reflexes) ->
+    log "attachReflexes"
+    # App communicates run stuff
+    reflexes["runStart"] = handleRunStart
+    reflexes["runQuit"] = handleRunQuit
+    reflexes["measurementData"] = handleMeasurementData
+    # App requesting all current Program Data
+    reflexes["programDataPlease"] = handleProgramDataRequest
+    # Webinterface asking for specific program data
+    reflexes["updateRunLabelPlease"] = handleRunLabelUpdateRequest
+    reflexes["saveProgramPlease"] = handleSaveProgramRequest
+    reflexes["cloneProgramPlease"] = handleCloneProgramRequest
+    reflexes["setProgramActivePlease"] = handleSetProgramActiveRequest
+    reflexes["programOverviewPlease"] = handleProgramOverviewRequest
+    reflexes["runOverviewPlease"] = handleRunOverviewRequest
+    reflexes["staticProgramDataPlease"] = handleStaticProgramDataRequest
+    reflexes["programPlease"] = handleProgramRequest
+    reflexes["runPlease"] = handleRunRequest
+    # webinterface 
+    reflexes["loginAttempt"] = handleLoginAttempt
+    return
+
+websocketmodule.rememberSocket = (webSocket) ->
+    log "websocketmodule.rememberSocket"
+
 
 websocketmodule.notifyCloneCreated = (newOverviewEntry) ->
     log "websocketmodule.notifyCloneCreated"

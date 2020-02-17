@@ -3,6 +3,7 @@ scimodule = {name: "scimodule"}
 log = (arg) ->
     if allModules.debugmodule.modulesToDebug["scimodule"]?  then console.log "[scimodule]: " + arg
     return
+ostr = (o) -> "\n" + JSON.stringify(o, null, 4)
 
 ############################################################
 #region node_modules
@@ -22,6 +23,10 @@ state = null
 
 ############################################################
 app = null
+wsHandle = null
+
+reflexes = {}
+
 
 ############################################################
 scimodule.initialize = () ->
@@ -37,12 +42,13 @@ scimodule.initialize = () ->
     wsHandle = expressWs(app);
     app.use bodyParser.urlencoded(extended: false)
     app.use bodyParser.json()
+    
+    ############################################################
+    allModules.websocketmodule.attachReflexes(reflexes)
     return
 
+############################################################
 #region internal functions
-################################################################################
-# Most Important Function
-################################################################################
 apiRoutine = (func, req, res) ->
     log func
     data = req.body
@@ -51,9 +57,8 @@ apiRoutine = (func, req, res) ->
     res.setHeader 'Content-Type', 'application/json'
     return data
 
-################################################################################
-# Layer 0 request Input handler
-################################################################################
+############################################################
+#region requestHandler
 checkLogin = (req, res) ->
     data = apiRoutine("checkLogin", req, res)
     result = getAuthentificationResult(data)
@@ -83,9 +88,35 @@ deleteProgram = (req, res) ->
     res.end JSON.stringify(result)
     return
 
+handleMessage = (message) ->
+    log "handleMessage"
+    try signal = JSON.parse(message)
+    catch err then return
+    return unless reflexes[signal.name]
+    reflexes[signal.name](signal.data)
+    return
+
+handleWebsocket = (webSocket, req) ->
+    log "handleWebsocket"
+    webSocket.on 'message', handleMessage
+    webSocket.on 'error', onWebsocketError
+    webSocket.on 'close', onWebsocketClose
+    return
+
+onWebsocketError = (error) ->
+    log "onWebsocketRootError"
+    log "error is: " + error
+    return
+
+onWebsocketClose = (arg) ->
+    log "onWebsocketRootClose"
+    log "arg is: " + arg
+    return
+
+#endregion
+
 ################################################################################
-# Layer 1 request Input handler
-################################################################################
+#region requestHandlerHelper
 getAuthentificationResult = (data) ->
     result = result: "error"
     if authenticationHandler.doLogin(data)
@@ -133,16 +164,23 @@ getDeleteProgramResult = (data) ->
     result.reason = "Not implemented yet!"
     return result 
 
+#endregion
 
-#################################################################
+############################################################
 attachSCIFunctions = ->
     log "attachSCIFunctions"
 
+    ############################################################
+    #region RESTRoutes
     app.post '/login', checkLogin
     app.post '/loadProgramData', loadProgramData
     app.post '/saveProgramData', saveProgramData
     app.post '/createProgram', createProgram
     app.post '/deleteProgram', deleteProgram
+    #endregion
+
+    app.ws '/', handleWebsocket
+    return
 
 listenForRequests = ->
     log "listenForRequests"
@@ -153,15 +191,17 @@ listenForRequests = ->
         port = process.env.PORT || cfg.defaultPort
         app.listen port
         log "listening on port: " + port
+
 #endregion
 
 
+############################################################
 #region exposed functions
 scimodule.prepareAndExpose = ->
     log "scimodule.prepareAndExpose"
     attachSCIFunctions()
     listenForRequests()
     
-#endregion exposed functions
+#endregion
 
 export default scimodule
