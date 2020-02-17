@@ -11,7 +11,7 @@ log = (arg) ->
 
 #region internal variables
 
-socket = null
+sockets = null
 
 auth = null
 state = null
@@ -168,7 +168,7 @@ websocketmodule.attachReflexes = (reflexes) ->
 
 websocketmodule.rememberSocket = (webSocket) ->
     log "websocketmodule.rememberSocket"
-
+    socket
 
 websocketmodule.notifyCloneCreated = (newOverviewEntry) ->
     log "websocketmodule.notifyCloneCreated"

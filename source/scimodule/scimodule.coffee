@@ -88,6 +88,7 @@ deleteProgram = (req, res) ->
     res.end JSON.stringify(result)
     return
 
+
 handleMessage = (message) ->
     log "handleMessage"
     try signal = JSON.parse(message)
@@ -98,6 +99,7 @@ handleMessage = (message) ->
 
 handleWebsocket = (webSocket, req) ->
     log "handleWebsocket"
+    allModules.websocketmodule.
     webSocket.on 'message', handleMessage
     webSocket.on 'error', onWebsocketError
     webSocket.on 'close', onWebsocketClose
