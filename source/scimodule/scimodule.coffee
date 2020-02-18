@@ -25,8 +25,8 @@ state = null
 app = null
 wsHandle = null
 
+############################################################
 reflexes = {}
-
 
 ############################################################
 scimodule.initialize = () ->
@@ -45,10 +45,11 @@ scimodule.initialize = () ->
     
     ############################################################
     allModules.websocketmodule.attachReflexes(reflexes)
+    allModules.websocketmodule.rememberSocketHandle(wsHandle)
     return
 
 ############################################################
-#region internal functions
+#region internalFunctions
 apiRoutine = (func, req, res) ->
     log func
     data = req.body
@@ -88,29 +89,38 @@ deleteProgram = (req, res) ->
     res.end JSON.stringify(result)
     return
 
+#endregion
 
-handleMessage = (message) ->
-    log "handleMessage"
-    try signal = JSON.parse(message)
-    catch err then return
-    return unless reflexes[signal.name]
-    reflexes[signal.name](signal.data)
-    return
+############################################################
+#region websocketHandler
 
 handleWebsocket = (webSocket, req) ->
     log "handleWebsocket"
-    allModules.websocketmodule.
-    webSocket.on 'message', handleMessage
-    webSocket.on 'error', onWebsocketError
-    webSocket.on 'close', onWebsocketClose
+    onWebSocketMessage = (message) -> handleMessage(webSocket, message)
+    onWebSocketError = (error) -> handleError(webSocket, error)
+    onWebSocketClose = (arg) -> handleClose(webSocket, arg)
+
+    webSocket.on 'message', onWebSocketMessage
+    webSocket.on 'error', onWebSocketError
+    webSocket.on 'close', onWebSocketClose
     return
 
-onWebsocketError = (error) ->
+handleMessage = (webSocket, message) ->
+    log "handleMessage"
+    try
+        signal = JSON.parse(message)
+        return unless reflexes[signal.name]
+        reflexes[signal.name](webSocket, signal.data)
+    catch err then log "handling message failed!"    
+    return
+
+############################################################
+handleError = (webSocket, error) ->
     log "onWebsocketRootError"
     log "error is: " + error
     return
 
-onWebsocketClose = (arg) ->
+handleClose = (webSocket, arg) ->
     log "onWebsocketRootClose"
     log "arg is: " + arg
     return
@@ -195,7 +205,6 @@ listenForRequests = ->
         log "listening on port: " + port
 
 #endregion
-
 
 ############################################################
 #region exposed functions

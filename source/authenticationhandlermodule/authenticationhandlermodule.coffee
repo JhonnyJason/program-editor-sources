@@ -30,6 +30,11 @@ getRandomChars = (length) ->
     return result
 
 #region exposed functions
+authenticationhandlermodule.isAuthorized = (data) ->
+    log "authenticationhandlermodule.isAuthorized"
+    return true if data.secret and data.secret == cfg.secret
+    return false
+    
 authenticationhandlermodule.doLogin = (data) ->
     log "authenticationhandlermodule.doLogin"
     if data.secret and data.secret == cfg.secret

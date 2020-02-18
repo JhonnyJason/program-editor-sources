@@ -1,27 +1,31 @@
 
 websocketmodule = {name: "websocketmodule"}
-
-#region node_modules
-#endregion
-
-#log Switch
+############################################################
+#region logPrintFunctions
 log = (arg) ->
     if allModules.debugmodule.modulesToDebug["websocketmodule"]?  then console.log "[websocketmodule]: " + arg
     return
+ostr = (o) -> JSON.stringify(o, null, 4)
+olog = (o) -> log "\n" + ostr(o)
+#endregion
 
-#region internal variables
+############################################################
+#region internalVariables
 
-sockets = null
-
-auth = null
-state = null
 runDataHandler = null
 programDataHandler = null
 
+############################################################
+auth = null
+state = null
+
+############################################################
+socket = null
 reflexes = {}
+
 #endregion
 
-##initialization function  -> is automatically being called!  ONLY RELY ON DOM AND VARIABLES!! NO PLUGINS NO OHTER INITIALIZATIONS!!
+############################################################
 websocketmodule.initialize = () ->
     log "websocketmodule.initialize"
     auth = allModules.authenticationhandlermodule
@@ -30,13 +34,28 @@ websocketmodule.initialize = () ->
     programDataHandler = allModules.programdatahandlermodule
     return
 
+############################################################
+sendSignal = (webSocket, name, data) ->
+    log "sendSignal"
+    message = JSON.stringify({name, data})
+    webSocket.send(message)
+    return
 
-#region internal functions
-################################################################################
+broadcastSignal = (name, data) ->
+    log "broadcastSignal"
+    message = JSON.stringify({name, data})
 
-################################################################################
-# io stuff
-################################################################################
+    # !!beware this is [object Set] ...
+    clients = socket.getWss().clients
+    
+    # olog clients
+    clients.forEach (client) ->
+        log "forEach item"
+        client.send(message)
+    return
+
+############################################################
+#region reflexes
 handleRunStart = ->
     log "handleRunStart"
     try runDataHandler.noteRunStart()
@@ -49,101 +68,121 @@ handleRunQuit = ->
     catch e then log e
     return
 
-handleProgramRequest = (programId) ->
+handleProgramRequest = (webSocket, programId) ->
     log "handleProgramRequest"
     log "requested Program has Id: " + programId
     try
         programData = await programDataHandler.getProgram(programId)
-        io_socket.emit("program", programData)
+        broadcastSignal("program", programData)
     catch e then log e
     return 
 
-handleRunRequest = (runId) ->
+handleRunRequest = (webSockt, runId) ->
     log "handleRunRequest"
     log "requested Run has Id: " + runId
     try
         runData = await programDataHandler.getRun(runId)
-        io_socket.emit("run", runData)
+        broadcastSignal("run", runData)
     catch e then log e
     return 
+
 
 handleProgramDataRequest = ->
     log "handleProgramDataRequest"
     try 
         await programDataHandler.preparePrograms()
-        programData = programs: state.programs
+        programData =
+            programs: allModules.state.programs
+            langStrings: allModules.state.langStrings
         # log(JSON.stringify(programData.programs))
         io_socket.emit("programData", programData)
     catch e then log e
     return 
 
-handleMeasurementData = (data) ->
+handleProgramDataRequest = (webSocket) ->
+    log "handleProgramDataRequest"
+    try 
+        await programDataHandler.preparePrograms()
+        programData = programs: state.programs
+        # log(JSON.stringify(programData.programs))
+        sendSignal(webSocket, "programData", programData)
+    catch e then log e
+    return 
+
+
+handleLangStringsRequest = ->
+    log "handleLangStringsRequest"
+    io_socket.emit("langStrings", allModules.state.langStrings)
+
+handleMeasurementData = (webSocket, data) ->
     #log "handleMeasurementData"
     try runDataHandler.digestMeasurementData(data)
     catch e then log e
     return 
     
-handleProgramOverviewRequest = ->
+handleProgramOverviewRequest = (webSocket) ->
     log "handleProgramOverviewRequest"
     try 
         programOverview = await programDataHandler.getProgramsOverview()  
-        io_socket.emit("programsOverview", programOverview)
+        sendSignal(webSocket, "programsOverview", programOverview)
     catch e then log e
     return
 
-handleRunOverviewRequest = (id) ->
+handleRunOverviewRequest = (webSocket, id) ->
     log "handleRunOverviewRequest"
     data = 
         id: id
     try 
         data.runOverview = await programDataHandler.getRunOverview(id)
-        io_socket.emit("runOverview", data)
+        sendSignal(webSocket, "runOverview", data)
     catch e then log e
     return
 
-handleStaticProgramDataRequest = ->
+handleStaticProgramDataRequest = (webSocket) ->
     log "handleStaticProgramDataRequest"
     try 
         staticProgramData = await programDataHandler.getStaticProgramData()  
-        io_socket.emit("staticProgramData", staticProgramData)
+        sendSignal(webSocket, "staticProgramData", staticProgramData)
     catch e then log e
     return 
 
-handleLoginAttempt = (data) ->
+handleLoginAttempt = (webSocket, data) ->
     log "handleLoginAttempt"
     result = result: "error"
-    if auth.doLogin(data)
+    if auth.isAuthorized(data)
         result = result: "ok"
-        io_socket.authorized = true
-    io_socket.emit("loginResult", result)
+        webSocket.authorized = true
+    sendSignal(webSocket, "loginResult", result)
+    return
 
-handleSaveProgramRequest = (program) ->
+handleSaveProgramRequest = (webSocket, program) ->
     log "handleSaveProgramRequest"
-    try allModules.programDataHandler.saveProgram(program)
+    try programDataHandler.saveProgram(program)
     catch e then log e
     return 
 
-handleCloneProgramRequest = (programsDynamicId) ->
+handleCloneProgramRequest = (webSocket, programsDynamicId) ->
     log "handleCloneProgramRequest"
-    try allModules.programDataHandler.cloneProgram(programsDynamicId)
+    try programDataHandler.cloneProgram(programsDynamicId)
     catch e then log e
     return
 
-handleSetProgramActiveRequest = (programsDynamicId) ->
+handleSetProgramActiveRequest = (webSocket, programsDynamicId) ->
     log "handleSetProgramActiveRequest"
-    try allModules.programDataHandler.setProgramActive(programsDynamicId)
+    try programDataHandler.setProgramActive(programsDynamicId)
     catch e then log e
     return 
 
-handleRunLabelUpdateRequest = (data) ->
+handleRunLabelUpdateRequest = (webSocket, data) ->
     log "handleRunLabelUpdateRequest"
-    try allModules.programDataHandler.updateRunLabel(data.id, data.label)
+    try programDataHandler.updateRunLabel(data.id, data.label)
     catch e then log e
     return
 
 #endregion
 
-#region exposed functions
+############################################################
+#region exposedFunctions
 websocketmodule.attachReflexes = (reflexes) ->
     log "attachReflexes"
     # App communicates run stuff
@@ -166,16 +205,46 @@ websocketmodule.attachReflexes = (reflexes) ->
     reflexes["loginAttempt"] = handleLoginAttempt
     return
 
-websocketmodule.rememberSocket = (webSocket) ->
+websocketmodule.rememberSocketHandle = (webSocketHandle) ->
     log "websocketmodule.rememberSocket"
-    socket
+    socket = webSocketHandle
+    return
 
 websocketmodule.notifyCloneCreated = (newOverviewEntry) ->
     log "websocketmodule.notifyCloneCreated"
-    if io_socket
-        io_socket.emit("cloneCreated", newOverviewEntry)
+    if socket
+        broadcastSignal("cloneCreated", newOverviewEntry)
 
 #endregion exposed functions
 
 export default websocketmodule
+
+################################################################################
+# Internal Functions
+################################################################################
+attachEventsToSocket = (socket) ->
+    log "attachEventsToSocket"
+    # App communicates run stuff
+    socket.on("runStart", handleRunStart)
+    socket.on("runQuit", handleRunQuit)
+    socket.on("measurementData", handleMeasurementData)
+    # App requesting all current Program Data
+    socket.on("programDataPlease", handleProgramDataRequest)
+    # Webinterface asking for specific program data
+    socket.on("updateRunLabelPlease", handleRunLabelUpdateRequest)
+    socket.on("saveProgramPlease", handleSaveProgramRequest)
+    socket.on("cloneProgramPlease", handleCloneProgramRequest)
+    socket.on("setProgramActivePlease", handleSetProgramActiveRequest)
+    socket.on("programOverviewPlease", handleProgramOverviewRequest)
+    socket.on("runOverviewPlease", handleRunOverviewRequest)
+    socket.on("staticProgramDataPlease", handleStaticProgramDataRequest)
+    socket.on("programPlease", handleProgramRequest)
+    socket.on("runPlease", handleRunRequest)
+    socket.on("langStringsPlease", handleLangStringsRequest)
+    # webinterface 
+    socket.on("loginAttempt", handleLoginAttempt)
+
+################################################################################
+# io stuff
+################################################################################
 
