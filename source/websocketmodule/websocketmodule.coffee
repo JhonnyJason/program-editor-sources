@@ -86,19 +86,6 @@ handleRunRequest = (webSockt, runId) ->
     catch e then log e
     return 
 
-
-handleProgramDataRequest = ->
-    log "handleProgramDataRequest"
-    try 
-        await programDataHandler.preparePrograms()
-        programData =
-            programs: allModules.state.programs
-            langStrings: allModules.state.langStrings
-        # log(JSON.stringify(programData.programs))
-        io_socket.emit("programData", programData)
-    catch e then log e
-    return 
-
 handleProgramDataRequest = (webSocket) ->
     log "handleProgramDataRequest"
     try 
@@ -108,11 +95,6 @@ handleProgramDataRequest = (webSocket) ->
         sendSignal(webSocket, "programData", programData)
     catch e then log e
     return 
-
-
-handleLangStringsRequest = ->
-    log "handleLangStringsRequest"
-    io_socket.emit("langStrings", allModules.state.langStrings)
 
 handleMeasurementData = (webSocket, data) ->
     #log "handleMeasurementData"
@@ -218,33 +200,3 @@ websocketmodule.notifyCloneCreated = (newOverviewEntry) ->
 #endregion exposed functions
 
 export default websocketmodule
-
-################################################################################
-# Internal Functions
-################################################################################
-attachEventsToSocket = (socket) ->
-    log "attachEventsToSocket"
-    # App communicates run stuff
-    socket.on("runStart", handleRunStart)
-    socket.on("runQuit", handleRunQuit)
-    socket.on("measurementData", handleMeasurementData)
-    # App requesting all current Program Data
-    socket.on("programDataPlease", handleProgramDataRequest)
-    # Webinterface asking for specific program data
-    socket.on("updateRunLabelPlease", handleRunLabelUpdateRequest)
-    socket.on("saveProgramPlease", handleSaveProgramRequest)
-    socket.on("cloneProgramPlease", handleCloneProgramRequest)
-    socket.on("setProgramActivePlease", handleSetProgramActiveRequest)
-    socket.on("programOverviewPlease", handleProgramOverviewRequest)
-    socket.on("runOverviewPlease", handleRunOverviewRequest)
-    socket.on("staticProgramDataPlease", handleStaticProgramDataRequest)
-    socket.on("programPlease", handleProgramRequest)
-    socket.on("runPlease", handleRunRequest)
-    socket.on("langStringsPlease", handleLangStringsRequest)
-    # webinterface 
-    socket.on("loginAttempt", handleLoginAttempt)
-
-################################################################################
-# io stuff
-################################################################################
-
